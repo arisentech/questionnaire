@@ -1,5 +1,4 @@
 <?php
-ob_start(); // IMPORTANT: prevents header issues
 session_start();
 include '../../config/db.php';
 
@@ -14,33 +13,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Please fill all fields";
     } else {
 
-        $stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
+        // Prepared statement (SECURE)
+        $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
+        $result = $stmt->get_result();
 
-        $stmt->store_result();
+        if ($result->num_rows > 0) {
 
-        if ($stmt->num_rows > 0) {
+            $user = $result->fetch_assoc();
 
-            $stmt->bind_result($id, $name, $email_db, $password_db, $role);
-            $stmt->fetch();
+            // PASSWORD VERIFY (IMPORTANT)
+            if (password_verify($password, $user['password'])) {
 
-            if (password_verify($password, $password_db)) {
+                $_SESSION['user'] = $user;
 
-                // ✅ STORE SESSION
-                $_SESSION['user'] = [
-                    'id' => $id,
-                    'name' => $name,
-                    'role' => $role
-                ];
-
-                // ✅ REDIRECT (FULL PATH - SAFEST)
-                if ($role == 'vendor') {
+                if ($user['role'] == 'vendor') {
                     header("Location: ../vendor/dashboard.php");
                 } else {
                     header("Location: ../admin/dashboard.php");
                 }
-                exit();
+                exit;
 
             } else {
                 $error = "Invalid password";
@@ -168,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="password" name="password" required>
         </div>
 
-        <button class="btn" type="submit">Login</button>
+        <button class="btn">Login</button>
 
     </form>
 
