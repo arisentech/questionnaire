@@ -115,11 +115,25 @@ body {
 
     <?php while ($row = $result->fetch_assoc()) { ?>
         <div class="card">
-            <strong>Assignment ID:</strong> <?php echo $row['id']; ?>
-        </div>
+    <strong>Assignment ID:</strong> <?php echo $row['id']; ?>
+
+    <br><br>
+
+    <a href="answer.php?id=<?php echo $row['id']; ?>" 
+       style="background:#2563eb;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;">
+       Fill Questionnaire
+    </a>
+</div>
     <?php } ?>
 
 </div>
+
+<br><br>
+
+<a href="report.php?id=<?php echo $row['id']; ?>" 
+   style="background:#16a34a;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;">
+   View Submitted Report
+</a>
 
 </body>
 </html>
