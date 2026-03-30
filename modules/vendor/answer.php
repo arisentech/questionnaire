@@ -1,15 +1,13 @@
 <?php
 session_start();
-include '../../config/db.php';
+include __DIR__ . '/../../config/db.php';
 
-// ✅ Validate assignment ID
 if (!isset($_GET['id'])) {
     die("Invalid request");
 }
 
 $aid = intval($_GET['id']);
 
-// ✅ Fetch questions with category + what_to_see
 $q = $conn->query("
 SELECT 
     q.id, 
@@ -23,7 +21,6 @@ WHERE aq.assignment_id = $aid
 ORDER BY c.id, q.id
 ");
 
-// ✅ Handle form submission (SAFE)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $conn->prepare("
@@ -33,118 +30,234 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     foreach ($_POST['answers'] as $qid => $ans) {
 
-        $qid = intval($qid);
-        $ans = trim($ans);
-
-        if ($ans == '') continue;
+        if (trim($ans) == '') continue;
 
         $stmt->bind_param("iis", $aid, $qid, $ans);
         $stmt->execute();
+
+        $answer_id = $stmt->insert_id;
+
+        if (isset($_FILES['files']['name'][$qid])) {
+
+            $count = count($_FILES['files']['name'][$qid]);
+
+            for ($i = 0; $i < $count; $i++) {
+
+                if ($_FILES['files']['name'][$qid][$i] == '') continue;
+
+                $name = $_FILES['files']['name'][$qid][$i];
+                $tmp  = $_FILES['files']['tmp_name'][$qid][$i];
+
+                $new = time().'_'.rand(1000,9999).'_'.basename($name);
+                $path = "../../uploads/".$new;
+
+                if (move_uploaded_file($tmp, $path)) {
+
+                    $conn->query("
+                        INSERT INTO files (answer_id, file_path)
+                        VALUES ($answer_id, '$path')
+                    ");
+                }
+            }
+        }
     }
 
-    echo "<h3 style='color:green;text-align:center;'>Submitted successfully!</h3>";
+    echo "<div class='success'>Submitted successfully</div>";
 }
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-<title>Answer Questionnaire</title>
+<title>Vendor Questionnaire</title>
 
 <style>
+* {
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background: #f1f5f9;
     margin: 0;
+    background: #f8fafc;
 }
 
-.container {
-    width: 90%;
-    max-width: 900px;
-    margin: 30px auto;
+/* HEADER */
+.header {
+    background: #0f172a;
+    color: white;
+    padding: 16px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.category {
-    margin-top: 30px;
-    padding-bottom: 5px;
-    border-bottom: 2px solid #e2e8f0;
-    color: #1e293b;
+.logo {
+    font-size: 18px;
+    font-weight: 600;
 }
 
-.question-box {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-}
-
-textarea {
-    width: 100%;
-    height: 100px;
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-}
-
-.what-to-see {
-    margin-top: 10px;
-    padding: 10px;
-    background: #eef2ff;
-    border-left: 4px solid #6366f1;
+.nav a {
+    color: #cbd5f5;
+    margin-left: 20px;
+    text-decoration: none;
     font-size: 14px;
 }
 
-button {
-    margin-top: 20px;
-    padding: 12px 20px;
+.nav a:hover {
+    color: white;
+}
+
+/* MAIN */
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* TITLE */
+.title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* CATEGORY */
+.category {
+    margin-top: 35px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* CARD */
+.card {
+    background: white;
+    padding: 22px;
+    border-radius: 14px;
+    margin-top: 15px;
+    border: 1px solid #e2e8f0;
+}
+
+/* QUESTION */
+.question {
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+/* TEXTAREA */
+textarea {
+    width: 100%;
+    height: 110px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* FILE */
+.file {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+/* INFO BOX */
+.info {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f1f5f9;
+    border-left: 4px solid #6366f1;
+    font-size: 13px;
+}
+
+/* BUTTON */
+.btn {
+    margin-top: 30px;
     background: #2563eb;
     color: white;
+    padding: 14px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 15px;
     cursor: pointer;
+}
+
+.btn:hover {
+    background: #1d4ed8;
+}
+
+/* SUCCESS */
+.success {
+    background: #dcfce7;
+    color: #166534;
+    padding: 12px;
+    text-align: center;
+}
+
+/* BACK */
+.back {
+    display: inline-block;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #2563eb;
+    text-decoration: none;
 }
 </style>
 </head>
 
 <body>
 
+<div class="header">
+    <div class="logo">Vendor Panel</div>
+    <div class="nav">
+        <a href="dashboard.php">Dashboard</a>
+        <a href="../auth/logout.php">Logout</a>
+    </div>
+</div>
+
 <div class="container">
 
-<form method="POST">
+<a href="dashboard.php" class="back">← Back</a>
+
+<div class="title">Complete Your Questionnaire</div>
+
+<form method="POST" enctype="multipart/form-data">
 
 <?php
-$current_category = '';
+$current = '';
 
 while ($row = $q->fetch_assoc()) {
 
-    // ✅ Show category heading
-    if ($current_category != $row['category_name']) {
-        $current_category = $row['category_name'];
-
-        echo "<h2 class='category'>$current_category</h2>";
+    if ($current != $row['category_name']) {
+        $current = $row['category_name'];
+        echo "<div class='category'>$current</div>";
     }
 ?>
 
-    <div class="question-box">
+<div class="card">
 
-        <h4><?php echo $row['question_text']; ?></h4>
-
-        <!-- ✅ Vendor Answer -->
-        <textarea name="answers[<?php echo $row['id']; ?>]" required></textarea>
-
-        <!-- ✅ What to See -->
-        <div class="what-to-see">
-            <strong>What evaluator will check:</strong><br>
-            <?php echo $row['what_to_see']; ?>
-        </div>
-
+    <div class="question">
+        <?php echo $row['question_text']; ?>
     </div>
+
+    <textarea name="answers[<?php echo $row['id']; ?>]" required></textarea>
+
+    <div class="file">
+        Upload supporting files (multiple allowed):
+        <input type="file" name="files[<?php echo $row['id']; ?>][]" multiple>
+    </div>
+
+    <div class="info">
+        <strong>What evaluator will check:</strong><br>
+        <?php echo $row['what_to_see']; ?>
+    </div>
+
+</div>
 
 <?php } ?>
 
-<button type="submit">Submit</button>
+<button class="btn">Submit Questionnaire</button>
 
 </form>
 

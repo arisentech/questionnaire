@@ -131,8 +131,8 @@ body {
 <br><br>
 
 <a href="report.php?id=<?php echo $row['id']; ?>" 
-   style="background:#16a34a;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;">
-   View Submitted Report
+style="background:#16a34a;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;">
+View Report
 </a>
 
 </body>
