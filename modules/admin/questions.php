@@ -1,6 +1,11 @@
 <?php
-include __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../auth/auth.php';
 include __DIR__ . '/../../config/db.php';
+
+
+
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
 if ($_POST) {
 
@@ -22,7 +27,7 @@ if ($_POST) {
 // categories
 $cats = $conn->query("SELECT * FROM categories");
 ?>
-
+<link rel="stylesheet" href="../css/style.css">
 <h2>Add Question</h2>
 
 <form method="POST">

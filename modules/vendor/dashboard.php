@@ -100,7 +100,14 @@ body {
 
 <div class="header">
     <h2>Vendor Dashboard</h2>
+    <div style="display:flex; gap:10px;">
+    <a href="../auth/change_password.php" 
+       style="background:#f59e0b;padding:8px 14px;color:white;text-decoration:none;border-radius:6px;">
+       Change Password
+    </a>
+
     <a class="logout" href="../auth/logout.php">Logout</a>
+</div>
 </div>
 
 <div class="container">
@@ -130,10 +137,10 @@ body {
 
 <br><br>
 
-<a href="report.php?id=<?php echo $row['id']; ?>" 
+<!--<a href="report.php?id=<?php echo $row['id']; ?>" 
 style="background:#16a34a;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;">
 View Report
-</a>
+</a>-->
 
 </body>
 </html>

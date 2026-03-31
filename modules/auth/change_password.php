@@ -1,6 +1,15 @@
 <?php
-include '../../includes/auth.php';
-include '../../config/db.php';
+session_start();
+
+// ✅ CORRECT PATH
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../../config/db.php';
+
+// ✅ SESSION CHECK
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit;
+}
 
 $user = $_SESSION['user'];
 $user_id = $user['id'];
@@ -13,10 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new = $_POST['new_password'];
     $confirm = $_POST['confirm_password'];
 
-    $res = $conn->query("SELECT password FROM users WHERE id=$user_id");
+    // ✅ SAFE QUERY
+    $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
     $row = $res->fetch_assoc();
 
-    if (!password_verify($current, $row['password'])) {
+    if (!$row || !password_verify($current, $row['password'])) {
         $error = "Current password incorrect";
     }
     elseif ($new !== $confirm) {
@@ -28,9 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     else {
         $hash = password_hash($new, PASSWORD_DEFAULT);
 
-        $conn->query("UPDATE users SET password='$hash' WHERE id=$user_id");
+        $stmt = $conn->prepare("UPDATE users SET password=? WHERE id=?");
+        $stmt->bind_param("si", $hash, $user_id);
+        $stmt->execute();
 
-        echo "<script>alert('Password Updated'); window.location='logout.php';</script>";
+        echo "<script>alert('Password Updated Successfully'); window.location='logout.php';</script>";
         exit;
     }
 }
@@ -51,7 +66,8 @@ body {
     margin: 80px auto;
     background: white;
     padding: 25px;
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 input {
     width: 100%;
@@ -65,6 +81,7 @@ button {
     background: #2563eb;
     color: white;
     border: none;
+    border-radius: 6px;
 }
 </style>
 </head>
